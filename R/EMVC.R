@@ -67,6 +67,7 @@ EMVC <- function(data, annotations, bootstrap.iter=20,
 
   # Optimize multiple bootstrap resampled datasets
   bootstrap.annotations = matrix(0, nrow=g, ncol=p)
+
   for (i in 1:params$bootstrap.iter) {    
     if (i %% 10 == 0) {
       message("Bootstrap iteration ", i, ": Sampling ", n, " values with replacement. ",
@@ -82,6 +83,10 @@ EMVC <- function(data, annotations, bootstrap.iter=20,
     
   # Average the bootstrap proportions
   bootstrap.proportions = bootstrap.annotations/params$bootstrap.iter  
+
+  # Copy over the row and column names
+  rownames(bootstrap.annotations) = rownames(annotations)
+  colnames(bootstrap.annotations) = colnames(annotations)
   
   return (bootstrap.proportions)
 }
@@ -140,10 +145,10 @@ createEMVCParams <- function(bootstrap.iter=20,
 checkOptimizeAnnotationArgs <- function(data, annotations, params) {
   current.warn = getOption("warn")
   options(warn=-1)
-  if (is.na(data)) {
+  if (missing(data)) {
     stop("data matrix must be specified!")
   }
-  if (is.null(annotations)) {
+  if (missing(annotations)) {
     stop("annotation matrix must be specified!")
   }  
   if (nrow(data) < 2) {
@@ -220,7 +225,9 @@ cluster <- function(data, params) {
   } else if (params$clust.method == "hclust") {
 
     # Create a correlation-based dissimilarity matrix, using Spearman rank correlation
-    cor.diss = as.dist((1-cor(data, method=params$hclust.cor.method))/2)    
+    cor.diss = as.dist((1-cor(data, method=params$hclust.cor.method))/2)
+    #rho = cor(data, method=params$hclust.cor.method)
+    #cor.diss = as.dist(1-sign(rho) * rho^2)
     # Cluster variables using hierarchical clustering, correlation dissimilarity and specified method
     hclust.results = hclust(d=cor.diss, method=params$hclust.method)
     # Get all of the partitional cuts
